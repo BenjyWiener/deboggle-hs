@@ -39,10 +39,10 @@ prompt msg = do putStr msg
 
 -- get all words that contain only the letters in `board` [not count-sensitive] and whose length is
 --  less then or equal to the number of cells in board, i.e. `size` ^ 2
-getWords :: Board -> IO (Set.Set String)
-getWords (board, size) = do let w = Char8.unpack $(embedFile "words.txt")
-                    let letters = Set.fromList $ foldl1 (++) $ board
-                    return $ Set.fromList $ filter (\s -> length s >= 4 && length s <= size ^ 2 && Set.fromList s `Set.isSubsetOf` letters) $ map (List.replace "qu" "_") $ words w
+getWords :: Board -> Set.Set String
+getWords (board, size) = let w = Char8.unpack $(embedFile "words.txt")
+                             letters = Set.fromList $ foldl1 (++) $ board
+                         in Set.fromList $ filter (\s -> length s >= 4 && length s <= size ^ 2 && Set.fromList s `Set.isSubsetOf` letters) $ map (List.replace "qu" "_") $ words w
 
 -- all the prefixes of `s` of length >2
 -- Ex: `prefixes "apple"` evaluates to ["ap","app","appl","apple"]
@@ -110,7 +110,7 @@ printAll (x:xs) = do putStrLn x
 
 main = do board <- getBoard
           start <- getCurrentTime
-          wds <- getWords board
+          let wds = getWords board
           let pfxs = Set.unions $ map prefixes $ Set.elems wds
           let res = concat [extendPath board wds pfxs ([(x, y)], [board # (x, y)]) | x <- [0..snd board - 1], y <- [0.. snd board - 1]]
           -- sort `res` alphabetically, then by length (result will be sorted primarily by size)
