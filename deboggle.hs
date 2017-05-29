@@ -77,7 +77,7 @@ getRows size n = do let rowNum = show $ size - n + 1
 -- the first row determines the size of the board, `size`, and the remaining rows are gotten
 --  by `getRows size (size - 1)`
 getBoard :: IO Board
-getBoard = do putStrLn "Enter the letters of the board, row by row, without spaces (for \"Qu\" enter just \"Q\":"
+getBoard = do putStrLn "Enter the letters of the board, row by row, without spaces (for \"Qu\" enter just \"Q\"):"
               row1' <- prompt "R1: "
               let row1 = map Char.toLower row1'
               let size = length row1
