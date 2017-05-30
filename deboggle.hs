@@ -11,6 +11,7 @@ import Data.FileEmbed
 import Data.Time
 import System.IO
 import System.Exit
+import Control.Monad
 import Control.DeepSeq
 
 
@@ -36,10 +37,6 @@ prompt :: String -> IO String
 prompt msg = do putStr msg
                 hFlush stdout
                 getLine
-
--- runs `act` iff `cond` is True
-iff :: Bool -> IO a -> IO ()
-iff cond act = if cond then act >> return () else return ()
 
 -- get all words that contain only the letters in `board` [not count-sensitive] and whose length is
 --  less then or equal to the number of cells in board, i.e. `size` ^ 2
@@ -68,8 +65,8 @@ getRows _ 0 = return []
 getRows size n = do let rowNum = show $ size - n + 1
                     rown' <- prompt $ 'R' : rowNum ++ ": "
                     let rown = map Char.toLower rown'
-                    iff (not $ rown =~ "^[a-z]*$") $ die "Error: board must only contain the letters a-z."
-                    iff (length rown < size) $ die $ "Error: Error: incorrect size for R" ++ rowNum ++ "."
+                    when (not $ rown =~ "^[a-z]*$") $ die "Error: board must only contain the letters a-z."
+                    when (length rown < size) $ die $ "Error: Error: incorrect size for R" ++ rowNum ++ "."
                     rows <- getRows size $ n - 1
                     return $ List.replace "q" "_" rown : rows
 
@@ -81,8 +78,8 @@ getBoard = do putStrLn "Enter the letters of the board, row by row, without spac
               row1' <- prompt "R1: "
               let row1 = map Char.toLower row1'
               let size = length row1
-              iff (not $ row1 =~ "^[a-z]*$") $ die "Error: board must only contain the letters a-z."
-              iff (length row1 < 2) $ die "Error: board must be at least 2x2."
+              when (not $ row1 =~ "^[a-z]*$") $ die "Error: board must only contain the letters a-z."
+              when (length row1 < 2) $ die "Error: board must be at least 2x2."
               rows <- getRows size $ size - 1
               return $ Board (List.replace "q" "_" row1 : rows) (length row1)
 
@@ -108,10 +105,10 @@ printAll (x:xs) = do putStrLn x
 main = do board@(Board _ size) <- getBoard
           start <- getCurrentTime
           let wds = getWords board
-          let pfxs = Set.unions $ map prefixes $ Set.elems wds
-          let res = concat [extendPath board wds pfxs (Path [Point x y] [board # Point x y]) | x <- [0..size - 1], y <- [0..size - 1]]
-          -- sort `res` alphabetically, then by length (result will be sorted primarily by length)
-          let sortedRes = List.sortBy (compare `on` length) . List.sort $ res
+              pfxs = Set.unions $ map prefixes $ Set.elems wds
+              res = concat [extendPath board wds pfxs (Path [Point x y] [board # Point x y]) | x <- [0..size - 1], y <- [0..size - 1]]
+              -- sort `res` alphabetically, then by length (result will be sorted primarily by length)
+              sortedRes = List.sortBy (compare `on` length) . List.sort $ res
           -- use `deepseq` to force complete evaluation, for accurate time logging
           end <- sortedRes `deepseq` getCurrentTime
           putStrLn $ (show $ length sortedRes) ++ " word(s) found in " ++ (init . show $ diffUTCTime end start) ++ " seconds"
