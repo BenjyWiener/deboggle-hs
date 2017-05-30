@@ -6,7 +6,7 @@ A Boggle puzzle solver written in Haskell.
 - [file-embed](https://hackage.haskell.org/package/file-embed)
 
 ## Compile
-<pre><b>$ </b>ghc --make deboggle.hs</pre>
+<pre><b>$ </b>ghc --make deboggle</pre>
 
 ## Usage
 - **\*nix**:  <pre><b>... $</b> ./deboggle</pre>
