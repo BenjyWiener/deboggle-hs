@@ -108,7 +108,7 @@ main = do board@(Board _ size) <- getBoard
               pfxs = Set.unions $ map prefixes $ Set.elems wds
               res = concat [extendPath board wds pfxs (Path [Point x y] [board # Point x y]) | x <- [0..size - 1], y <- [0..size - 1]]
               -- sort `res` alphabetically, then by length (result will be sorted primarily by length)
-              sortedRes = List.sortBy (compare `on` length) . List.sort $ res
+              sortedRes = List.sortBy ((flip compare) `on` length) . List.sort $ res
           -- use `deepseq` to force complete evaluation, for accurate time logging
           end <- sortedRes `deepseq` getCurrentTime
           putStrLn $ (show $ length sortedRes) ++ " word(s) found in " ++ (init . show $ diffUTCTime end start) ++ " seconds"
