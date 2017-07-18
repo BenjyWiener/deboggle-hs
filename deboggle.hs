@@ -66,7 +66,7 @@ getRows size n = do let rowNum = show $ size - n + 1
                     rown' <- prompt $ 'R' : rowNum ++ ": "
                     let rown = map Char.toLower rown'
                     when (not $ rown =~ "^[a-z]*$") $ die "Error: board must only contain the letters a-z."
-                    when (length rown < size) $ die $ "Error: Error: incorrect size for R" ++ rowNum ++ "."
+                    when (length rown /= size) $ die $ "Error: incorrect size for R" ++ rowNum ++ "."
                     rows <- getRows size $ n - 1
                     return $ List.replace "q" "_" rown : rows
 
@@ -80,7 +80,7 @@ getBoard = do putStrLn "Enter the letters of the board, row by row, without spac
               let size = length row1
               when (not $ row1 =~ "^[a-z]*$") $ die "Error: board must only contain the letters a-z."
               when (length row1 < 2) $ die "Error: board must be at least 2x2."
-              rows <- getRows size $ size - 1
+              rows <- getRows size (size - 1)
               return $ Board (List.replace "q" "_" row1 : rows) (length row1)
 
 -- all the branches of `path` by extending it along all valid points adjacent to its top point
@@ -96,19 +96,18 @@ extendPath board wds pfxs path@(Path _ str)
   | str `Set.member` wds        = List.replace "_" "qu" str : concat [extendPath board wds pfxs path' | path' <- branches board path]
   | otherwise                   = concat [extendPath board wds pfxs path' | path' <- branches board path]
 
--- prints a each element in a list of `String`s on its own line
+-- prints each element in a list of `String`s on its own line
 printAll :: [String] -> IO ()
 printAll [] = return ()
-printAll (x:xs) = do putStrLn x
-                     printAll xs
+printAll (x:xs) = putStrLn x >> printAll xs
 
 main = do board@(Board _ size) <- getBoard
           start <- getCurrentTime
           let wds = getWords board
               pfxs = Set.unions $ map prefixes $ Set.elems wds
-              res = concat [extendPath board wds pfxs (Path [Point x y] [board # Point x y]) | x <- [0..size - 1], y <- [0..size - 1]]
+              res = List.concat [extendPath board wds pfxs (Path [Point x y] [board # Point x y]) | x <- [0..size - 1], y <- [0..size - 1]]
               -- sort `res` alphabetically, then by length (result will be sorted primarily by length)
-              sortedRes = List.sortBy ((flip compare) `on` length) . List.sort $ res
+              sortedRes = List.sortBy ((flip compare) `on` length) . List.sort . List.nub $ res
           -- use `deepseq` to force complete evaluation, for accurate time logging
           end <- sortedRes `deepseq` getCurrentTime
           putStrLn $ (show $ length sortedRes) ++ " word(s) found in " ++ (init . show $ diffUTCTime end start) ++ " seconds"
